@@ -1,0 +1,48 @@
+const LEFT_PARTICLES_COUNT = 320
+const RIGHT_PARTICLES_COUNT = 80
+const PARTICLES_COUNT = LEFT_PARTICLES_COUNT + RIGHT_PARTICLES_COUNT
+
+const RIGHT_MIN = 0
+const RIGHT_MAX = 0.6
+const LEFT_MIN = -0.6
+const LEFT_MAX = RIGHT_MIN - (RIGHT_MIN - LEFT_MIN) / (LEFT_PARTICLES_COUNT + 2)
+
+const LEFT_DENSITY = 1.0
+const LEFT_VELOCITY= 0.0
+const LEFT_ENERGY = 2.5
+const LEFT_PRESSURE = 1.0
+
+const RIGHT_DENSITY = 0.25
+const RIGHT_VELOCITY= 0.0
+const RIGHT_ENERGY = 1.795
+const RIGHT_PRESSURE = 0.1795
+
+const PARTICLE_MASS = 0.001875
+const GAMMA = 1.4
+
+const DX = 0.6/80
+const HSML = 2.0 * DX
+
+const TIME_STEPS = 40
+const TIME_DELTA = 0.005
+
+const FIXED_SIDES_PARTICLES_COUNT = 20
+
+function generateQuantities()
+    # Position
+    x = append!(
+        [(i)*DX/4 + LEFT_MIN for i in 1:LEFT_PARTICLES_COUNT],
+        [(i-LEFT_PARTICLES_COUNT-1)*DX + DX/2 for i in LEFT_PARTICLES_COUNT+1:PARTICLES_COUNT]
+    )
+    #[(i-LEFT_PARTICLES_COUNT)*DX for i in LEFT_PARTICLES_COUNT+1:PARTICLES_COUNT]
+    # Density
+    ρ = append!(LEFT_DENSITY .* ones(LEFT_PARTICLES_COUNT), RIGHT_DENSITY .* ones(RIGHT_PARTICLES_COUNT))
+    # Energy
+    u = append!(LEFT_ENERGY .* ones(LEFT_PARTICLES_COUNT), RIGHT_PRESSURE .* ones(RIGHT_PARTICLES_COUNT))
+    # Velocity
+    v = zeros(PARTICLES_COUNT)
+    # Pressure
+    p = append!(LEFT_PRESSURE .* ones(LEFT_PARTICLES_COUNT), RIGHT_PRESSURE .* ones(RIGHT_PARTICLES_COUNT))
+
+    (x, ρ, u, v, p)
+end
