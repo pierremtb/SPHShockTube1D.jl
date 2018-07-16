@@ -9,7 +9,7 @@ function doSPHmagic(x, ρ, u, v, p, L, H)
     # 3 - Equation of state for ideal gases
     p = (u .* ρ) * (GAMMA - 1)
 
-    # 4,5 - Compute L operand
+    # 4,5 - Compute L,H operands
     (L, H) = computeoperands(ρ, p, v, pairs, ∂x_W)
 
     # 6 - Add artificial viscosity contribution
@@ -27,8 +27,10 @@ function directfind(x)
         for j in i+1:PARTICLES_COUNT
             r = x[i] - x[j]
             if abs(r) < 2 * 2HSML
+                # Saving the interacting pair
                 push!(pairs, (i, j))
 
+                # Computing and saving the corresponding smoothing kernel value
                 (W_k, ∂x_W_k) = doublecosine(r, HSML)
                 push!(W, W_k)
                 push!(∂x_W, ∂x_W_k)
@@ -73,8 +75,8 @@ function computeoperands(ρ, p, v, pairs, ∂x_W)
         L[j] -= ∂x_W[k] * p_ij * PARTICLE_MASS
 
         # Wrapping for L and both particles, remembering ∂x_W_ij = -∂x_W_ji
-        H[i] += ∂x_W[k] * 0.5 * (v[i] - v[j]) * p_ij * PARTICLE_MASS
-        H[j] += ∂x_W[k] * 0.5 * (v[i] - v[j]) * p_ij * PARTICLE_MASS
+        H[i] -= ∂x_W[k] * 0.5 * (v[i] - v[j]) * p_ij * PARTICLE_MASS
+        H[j] += ∂x_W[k] * 0.5 * (v[j] - v[i]) * p_ij * PARTICLE_MASS
     end
 
     (L, H)
@@ -106,16 +108,16 @@ function correctwithartviscosity(x, ρ, p, v, pairs, ∂x_W, L, H)
             muv = HSML * xpsv / (xpsx + HSML^2 * etq^2)
             mc = (sqrt(abs(GAMMA * p[i]/ρ[i])) + sqrt(abs(GAMMA * p[j]/ρ[j]))) / 2
             ρ_m = (ρ[i] + ρ[j]) / 2
-            piv = (qb * muv - qb * mc) * muv/ρ_m
-            hx = - piv * ∂x_W[k]
+            piv = (qb * muv - qa * mc) * muv/ρ_m
+            hx = -piv * ∂x_W[k]
 
             # Adding to artificial acceleration contribution
             art_L[i] += PARTICLE_MASS * hx
-            art_L[j] += PARTICLE_MASS * hx
+            art_L[j] -= PARTICLE_MASS * hx
 
             # Adding to artificial energy contribution
             art_H[i] += v_ij / 2 * PARTICLE_MASS * hx
-            art_H[j] += v_ij / 2 * PARTICLE_MASS * hx
+            art_H[j] -= -v_ij / 2 * PARTICLE_MASS * hx
         end
     end
 

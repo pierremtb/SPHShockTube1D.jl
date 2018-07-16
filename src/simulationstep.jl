@@ -8,24 +8,28 @@ function computeSimulationStep(step, x, ρ, u, v, p, L, H)
         previous_v = copy(v)
 
         # Compute half-step integration
-        u += TIME_DELTA/2 * H
-        v += TIME_DELTA/2 * L
+        for i in FIXED_SIDES_PARTICLES_COUNT:PARTICLES_COUNT-FIXED_SIDES_PARTICLES_COUNT
+            u[i] += TIME_DELTA/2 * H[i]
+            v[i] += TIME_DELTA/2 * L[i]
+        end
     end
 
     (x, ρ, u, v, p, L, H) = doSPHmagic(x, ρ, u, v, p, L, H)
 
     # Second Leap-Frog integration
-    if step > 1
-        # Compute half-step integration with previous value
-        u = previous_u + TIME_DELTA * H
-        v = previous_v + TIME_DELTA * L
-    else
-        # Compute first half-step integration
-        u += TIME_DELTA * H
-        v += TIME_DELTA * L
+    for i in FIXED_SIDES_PARTICLES_COUNT:PARTICLES_COUNT-FIXED_SIDES_PARTICLES_COUNT
+        if step > 1
+            # Compute half-step integration with previous value
+            u[i] = previous_u[i] + TIME_DELTA * H[i]
+            v[i] = previous_v[i] + TIME_DELTA * L[i]
+        else
+            # Compute first half-step integration
+            u[i] += TIME_DELTA * H[i]
+            v[i] += TIME_DELTA * L[i]
+        end
+        # Compute regular integration
+        x[i] += TIME_DELTA * v[i]
     end
-    # Compute regular integration
-    x += TIME_DELTA * v
 
     (x, ρ, u, v, p, L, H)
 end
